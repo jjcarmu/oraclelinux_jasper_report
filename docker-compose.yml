@@ -1,0 +1,33 @@
+services:
+  reportes:
+    #image: oraclelinux:10
+    image: jjcarmu/oraclelinux_report
+    container_name: jasper_report
+    # Conecta directamente con tus interfaces físicas y de VMware
+    #network_mode: host
+    ports:
+      - "8880:8080"
+      - "5505:5005"
+    privileged: true # Evita bloqueos de AppArmor al apagar o usar herramientas de red
+    # Permisos específicos para nmap y herramientas de red
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+    security_opt:
+      - apparmor:unconfined # Desbloquea el cierre del contenedor desde el host
+    tty: true
+    stdin_open: true
+    #environment:
+    #JAVA_HOME: /usr/lib/jvm/temurin-17-jdk/
+    #PATH: $JAVA_HOME/bin:$PATH
+    restart: always
+    volumes:
+      - ./jasper-servlet:/opt/jasper-servlet
+      - ./tomcat-config/:/opt/tomcat-config
+networks:
+  # Solo dejamos una red interna para las víctimas de contenedor
+  lab_red:
+    driver: bridge
+    #ipam:
+    #config:
+    #- subnet: 172.20.0.0/24

@@ -1,0 +1,126 @@
+{
+	"info": {
+		"_postman_id": "58c835e0-8f59-4bd6-8a55-6fe44d582c3a",
+		"name": "Univalle",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "pruebaJasperReport",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reporte\": \"/usr/share/tomcat/webapps/reportes/sifi/SaldoEnTransito.jrxml\",\n    \"salida\": \"/vhosts/reportes/sifi/test_nobd.pdf\",\n    \"parametros\": {\n        \"IMAGEN_DIR\": \"/usr/share/tomcat/webapps/reportes/sifi/\",\n        \"nombreDepartamento\": \"TEST\",\n        \"CdEspera\": \"0\",\n        \"AjDebitoEspera\": \"0\",\n        \"CreditoCdEspera\": \"0\",\n        \"CertificadoInterfinanzas\": \"0\",\n        \"SaldoFinanAcum\": \"0\",\n        \"RNDLapso\": \"0\",\n        \"DebitoRdRND\": \"0\",\n        \"CreditoRdRND\": \"0\",\n        \"DisponibleRegistro\": \"0\",\n        \"SaldoFinanzas\": \"0\",\n        \"Mes\": \"Test\",\n        \"subNivel_2\": \"\",\n        \"subNivel_2_value\": \"\"\n    }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8880/reportesJasper/GenerarReporte",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8880",
+					"path": [
+						"reportesJasper",
+						"GenerarReporte"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "pruebaJasperReport2",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reporte\": \"/usr/share/tomcat/webapps/reportes/sifi/SaldoEnTransito.jrxml\",\n    \"salida\": \"/vhosts/reportes/sifi/prueba001.pdf\",\n    \"driver\": \"oracle.jdbc.driver.OracleDriver\",\n    \"url\": \"jdbc:oracle:thin:@192.168.3.2:1526:PRUEBAS\",\n    \"usuario\": \"USUARIO\",\n    \"password\": \"PassWord\",\n    \"sql\": \"SELECT SUM(SAPPAPDE-SAPPCEDI) TOTAL FROM SALDPRPE WHERE SAPPEMPR='01' AND SAPPPERI='2026' AND SAPPCUPR LIKE '70103___________'\",\n    \"parametros\": {\n        \"IMAGEN_DIR\": \"/usr/share/tomcat/webapps/reportes/sifi/\",\n        \"nombreDepartamento\": \"01-Rectoria\",\n        \"CdEspera\": \"10,000\",\n        \"AjDebitoEspera\": \"10,000\",\n        \"CreditoCdEspera\": \"10,000\",\n        \"CertificadoInterfinanzas\": \"10,000\",\n        \"SaldoFinanAcum\": \"10,000\",\n        \"RNDLapso\": \"10,000\",\n        \"DebitoRdRND\": \"10,000\",\n        \"CreditoRdRND\": \"10,000\",\n        \"DisponibleRegistro\": \"10,000\",\n        \"SaldoFinanzas\": \"10,000\",\n        \"Mes\": \"Febrero 2026\",\n        \"subNivel_2\": \"Fuente\",\n        \"subNivel_2_value\": \"03-Fondo Comun\",\n        \"subNivel_3\": null,\n        \"subNivel_3_value\": null,\n        \"subNivel_4\": null,\n        \"subNivel_4_value\": null,\n        \"subNivel_5\": null,\n        \"subNivel_5_value\": null\n    }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8880/reportesJasper/GenerarReporte",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8880",
+					"path": [
+						"reportesJasper",
+						"GenerarReporte"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "pruebaJasperReport3",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reporte\": \"/usr/share/tomcat/webapps/reportes/sifi/SaldoEnTransito.jrxml\",\n    \"salida\": \"/vhosts/reportes/sifi/test_nobd.pdf\",\n    \"parametros\": {\n        \"IMAGEN_DIR\": \"/usr/share/tomcat/webapps/reportes/sifi/\",\n        \"nombreDepartamento\": \"TEST\",\n        \"CdEspera\": \"0\",\n        \"AjDebitoEspera\": \"0\",\n        \"CreditoCdEspera\": \"0\",\n        \"CertificadoInterfinanzas\": \"0\",\n        \"SaldoFinanAcum\": \"0\",\n        \"RNDLapso\": \"0\",\n        \"DebitoRdRND\": \"0\",\n        \"CreditoRdRND\": \"0\",\n        \"DisponibleRegistro\": \"0\",\n        \"SaldoFinanzas\": \"0\",\n        \"Mes\": \"Test\",\n        \"subNivel_2\": \"\",\n        \"subNivel_2_value\": \"\"\n    }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8880/reportesJasper/GenerarReporte",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8880",
+					"path": [
+						"reportesJasper",
+						"GenerarReporte"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "pruebaJasperReport4",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reporte\": \"/usr/share/tomcat/webapps/reportes/sifi/pruebas.jrxml\",\n    \"salida\": \"/vhosts/reportes/sifi/test_null.pdf\",\n    \"parametros\": {\n        \n    }\n}"
+				},
+				"url": {
+					"raw": "http://localhost:8880/reportesJasper/GenerarReporte",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8880",
+					"path": [
+						"reportesJasper",
+						"GenerarReporte"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"protocolProfileBehavior": {}
+}
