@@ -1,7 +1,7 @@
 services:
   reportes:
     #image: oraclelinux:10
-    image: jjcarmu/oraclelinux_report
+    image: jjcarmu/oraclelinux_report:1.0
     container_name: jasper_report
     # Conecta directamente con tus interfaces físicas y de VMware
     #network_mode: host
@@ -24,6 +24,8 @@ services:
     volumes:
       - ./jasper-servlet:/opt/jasper-servlet
       - ./tomcat-config/:/opt/tomcat-config
+      - ./jrxml/:/usr/share/tomcat/webapps/reportes
+      - ./generacion-reporte/:/vhosts/reportes
 networks:
   # Solo dejamos una red interna para las víctimas de contenedor
   lab_red:
