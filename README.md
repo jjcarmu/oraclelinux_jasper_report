@@ -41,7 +41,11 @@ mvn clean package -DskipTests
 ```bash
 cp /opt/jasper-servlet/target/reportes.war /usr/share/tomcat/webapps/reportesJasper.war
 ```
-*  Levantar de nuevo el tomcat
+*  Se debe dar los permisos de user y group tomcat  
+```bash
+chown -R tomcat:tomcat /usr/share/tomcat/webapps/
+```
+* Levantar de nuevo el tomcat
 ```bash
 /usr/share/tomcat/bin/startup.sh
 ```
