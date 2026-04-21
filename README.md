@@ -42,7 +42,6 @@ mvn clean package -DskipTests
 cp /opt/jasper-servlet/target/reportes.war /usr/share/tomcat/webapps/reportesJasper.war
 ```
 *  Levantar de nuevo el tomcat
-*  Copiar el war generado en las aplicaciones de tomcat
 ```bash
 /usr/share/tomcat/bin/startup.sh
 ```
