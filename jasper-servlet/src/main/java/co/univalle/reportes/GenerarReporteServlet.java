@@ -7,6 +7,12 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 
+import net.sf.jasperreports.engine.design.JasperDesign;
+import net.sf.jasperreports.engine.xml.JRXmlLoader;
+import net.sf.jasperreports.engine.design.JRDesignQuery;
+import net.sf.jasperreports.engine.JasperCompileManager;
+import net.sf.jasperreports.engine.JasperReport;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -16,6 +22,9 @@ import java.sql.*;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+// import org.slf4j.Logger;
+// import org.slf4j.LoggerFactory;
 
 /**
  * Servlet JasperReports - Universidad del Valle
@@ -41,9 +50,13 @@ public class GenerarReporteServlet extends HttpServlet {
     private static final long serialVersionUID = 1L;
     private final ObjectMapper mapper = new ObjectMapper();
 
+    // private static final Logger logger = LoggerFactory.getLogger(GenerarReporteServlet.class);
+
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
+
+        // logger.info("Iniciando la generación del reporte...");
 
         resp.setContentType("application/json;charset=UTF-8");
         PrintWriter out = resp.getWriter();
@@ -54,8 +67,7 @@ public class GenerarReporteServlet extends HttpServlet {
 
         try {
             // Leer body JSON
-            String body = req.getReader().lines()
-                    .collect(Collectors.joining(System.lineSeparator()));
+            String body = req.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
             @SuppressWarnings("unchecked")
             Map<String, Object> datos = mapper.readValue(body, Map.class);
@@ -69,14 +81,14 @@ public class GenerarReporteServlet extends HttpServlet {
             String sql = (String) datos.get("sql");
 
             @SuppressWarnings("unchecked")
-            Map<String, Object> parametrosMapa =
-                    (Map<String, Object>) datos.getOrDefault("parametros", new HashMap<>());
+            Map<String, Object> parametrosMapa = (Map<String, Object>) datos.getOrDefault("parametros", new HashMap<>());
 
             // Validaciones
             if (rutaReporte == null || rutaSalida == null) {
                 jsonError(out, "Faltan campos 'reporte' o 'salida'");
                 return;
             }
+
             File archivoJrxml = new File(rutaReporte);
             if (!archivoJrxml.exists()) {
                 jsonError(out, "No existe el archivo: " + rutaReporte);
@@ -96,53 +108,74 @@ public class GenerarReporteServlet extends HttpServlet {
             File archivoJasper = new File(rutaJasper);
 
             JasperReport jasperReport;
-            if (!archivoJasper.exists() ||
-                    archivoJrxml.lastModified() > archivoJasper.lastModified()) {
-                jasperReport = JasperCompileManager.compileReport(rutaReporte);
-                JasperCompileManager.compileReportToFile(rutaReporte, rutaJasper);
-            } else {
-                jasperReport = (JasperReport) JRLoader.loadObject(archivoJasper);
-            }
+
+            // if (!archivoJasper.exists() || archivoJrxml.lastModified() > archivoJasper.lastModified()) {
+            //     jasperReport = JasperCompileManager.compileReport(rutaReporte);
+            //     JasperCompileManager.compileReportToFile(rutaReporte, rutaJasper);
+            // } else {
+            //     jasperReport = (JasperReport) JRLoader.loadObject(archivoJasper);
+            // }
 
             // Llenar el reporte
             JasperPrint jasperPrint;
 
-            boolean tieneConexion = driver != null && urlJdbc != null
-                                    && usuario != null && password != null;
+            boolean tieneConexion = driver != null && urlJdbc != null && usuario != null && password != null;
             boolean tieneSql = sql != null && !sql.trim().isEmpty();
 
+            // si se envia el sql voy a compilar el reporte siempre
             if (tieneConexion && tieneSql) {
-                // Ejecutar SQL externo manualmente -> JRResultSetDataSource
-                // JasperReports usa este datasource y NO ejecuta el queryString del jrxml
-                Class.forName(driver);
-                conn = DriverManager.getConnection(urlJdbc, usuario, password);
-                stmt = conn.createStatement(
-                        ResultSet.TYPE_SCROLL_INSENSITIVE,
-                        ResultSet.CONCUR_READ_ONLY);
-                rs = stmt.executeQuery(sql);
+                // 1. Cargar el diseño del archivo .jrxml
+                JasperDesign jasperDesign = JRXmlLoader.load(rutaReporte);
 
-                JRResultSetDataSource dataSource = new JRResultSetDataSource(rs);
-                jasperPrint = JasperFillManager.fillReport(
-                        jasperReport, parametros, dataSource);
+                // 2. Crear o modificar la consulta SQL
+                JRDesignQuery newQuery = new JRDesignQuery();
+                newQuery.setText(sql);
 
-            } else if (tieneConexion) {
+                // 3. Inyectar la nueva consulta en el diseño
+                jasperDesign.setQuery(newQuery);
+
+                // 4. Ahora sí, compilar el diseño modificado
+                jasperReport = JasperCompileManager.compileReport(jasperDesign);
+                JasperCompileManager.compileReportToFile(rutaReporte, rutaJasper);
+            } else {
+                if (!archivoJasper.exists() || archivoJrxml.lastModified() > archivoJasper.lastModified()) {
+                    jasperReport = JasperCompileManager.compileReport(rutaReporte);
+                    JasperCompileManager.compileReportToFile(rutaReporte, rutaJasper);
+                } else {
+                    jasperReport = (JasperReport) JRLoader.loadObject(archivoJasper);
+                }
+            }
+
+            // no voy a utilizar JRResultSetDataSource
+            // if (tieneConexion && tieneSql) {
+            //     // Ejecutar SQL externo manualmente -> JRResultSetDataSource
+            //     // JasperReports usa este datasource y NO ejecuta el queryString del jrxml
+            //     Class.forName(driver);
+            //     conn = DriverManager.getConnection(urlJdbc, usuario, password);
+            //     stmt = conn.createStatement(
+            //             ResultSet.TYPE_SCROLL_INSENSITIVE,
+            //             ResultSet.CONCUR_READ_ONLY);
+            //     rs = stmt.executeQuery(sql);
+
+            //     JRResultSetDataSource dataSource = new JRResultSetDataSource(rs);
+            //     jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, dataSource);
+
+            // } else 
+
+            if (tieneConexion) {
                 // Sin SQL externo: JasperReports ejecuta su queryString interno
                 Class.forName(driver);
                 conn = DriverManager.getConnection(urlJdbc, usuario, password);
-                jasperPrint = JasperFillManager.fillReport(
-                        jasperReport, parametros, conn);
-
+                jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, conn);
             } else {
                 // Sin BD: solo parámetros
-                jasperPrint = JasperFillManager.fillReport(
-                        jasperReport, parametros, new JREmptyDataSource());
+                jasperPrint = JasperFillManager.fillReport(jasperReport, parametros, new JREmptyDataSource());
             }
 
             // Exportar PDF
             JRPdfExporter exporter = new JRPdfExporter();
             exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-            exporter.setExporterOutput(
-                    new SimpleOutputStreamExporterOutput(rutaSalida));
+            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
             exporter.exportReport();
 
             Map<String, Object> respuesta = new HashMap<>();
