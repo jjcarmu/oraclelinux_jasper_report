@@ -1,8 +1,10 @@
+version: '3.8'
 services:
-  reportes:
+  jasper_report:
     #image: oraclelinux:10
-    image: jjcarmu/oraclelinux_report:1.0
+    build: .
     container_name: jasper_report
+    restart: unless-stopped
     # Conecta directamente con tus interfaces físicas y de VMware
     #network_mode: host
     ports:

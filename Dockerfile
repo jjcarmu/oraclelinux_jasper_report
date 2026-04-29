@@ -1,0 +1,67 @@
+FROM jjcarmu/oraclelinux_report:1.0
+
+# 1. Instala las dependencias necesarias ( wget, tar, gzip)
+RUN dnf update -y && \
+    dnf install -y wget tar gzip && \
+    dnf clean all
+
+# 2. Variable de entorno JAVA_HOME
+ENV JAVA_HOME=/usr/lib/jvm/temurin-17-jdk
+
+# 3. Variable de entorno PATH
+ENV PATH=$JAVA_HOME/bin:$PATH
+
+# 4. Variable de entorno JRE_HOME
+ENV JRE_HOME=/usr/lib/jvm/temurin-17-jdk
+
+# 5. Variable de entorno JAVA_OPTS
+ENV JAVA_OPTS="-Djava.security.egd=file:/dev/./urandom -Xms512m -Xmx1024m"
+
+# 6. Variable de entorno CATALINA_PID
+ENV CATALINA_PID="$CATALINA_BASE/temp/tomcat.pid"
+
+# 7. Variable de entorno CATALINA_OPTS
+ENV CATALINA_OPTS="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005"
+
+# 8. Variable de entorno JASPER_HOME
+ENV JASPER_HOME="/usr/share/tomcat"
+
+# 9. Variable de entorno TOMCAT_USER
+ENV TOMCAT_USER="tomcat"
+
+# Seguridad
+# 10. Variable de entorno SECURITY_MANAGER
+ENV SECURITY_MANAGER="false"
+
+# 11. Copiamos variables de entorno
+COPY ./tomcat-config/.bashrc /root/.bashrc
+
+# 12. Copiamos variables de entorno para el tomcat
+COPY ./tomcat-config/usr/share/tomcat/bin/setenv.sh /usr/share/tomcat/bin/setenv.sh
+
+# 13. Damos permiso de ejecución
+RUN chmod +x /usr/share/tomcat/bin/setenv.sh
+
+# 14. Ejecutamos las variables de entorno
+RUN /usr/share/tomcat/bin/setenv.sh
+
+# 15. Copiamos el código fuente desde el host hacia la imagen
+COPY ./jasper-servlet /opt/jasper-servlet
+
+# 16. Nos ubicamos en el directorio del código fuente
+WORKDIR /opt/jasper-servlet
+
+# 17. Compilamos el proyecto para generar el .war
+RUN mvn clean package -DskipTests
+
+# 18. Copiamos el WAR generado a la carpeta webapps de Tomcat con el nuevo nombre
+RUN cp target/reportes.war /usr/share/tomcat/webapps/reportesJasper.war
+
+# 19. Asignamos los permisos correctos al usuario tomcat
+RUN chown -R tomcat:tomcat /usr/share/tomcat/webapps/
+
+# 20. Expone el puerto por defecto de Tomcat
+EXPOSE 8880
+
+# 21. EL PASO CRUCIAL: Inicia Tomcat en primer plano (foreground)
+CMD ["/usr/share/tomcat/bin/catalina.sh", "run"]
