@@ -1,8 +1,8 @@
 FROM jjcarmu/oraclelinux_report:1.0
 
-# 1. Instala las dependencias necesarias ( wget, tar, gzip)
+# 1. Instala las dependencias necesarias ( wget, tar, gzip, apache, nano)
 RUN dnf update -y && \
-    dnf install -y wget tar gzip && \
+    dnf install -y wget tar gzip httpd nano && \
     dnf clean all
 
 # 2. Variable de entorno JAVA_HOME
@@ -29,8 +29,7 @@ ENV JASPER_HOME="/usr/share/tomcat"
 # 9. Variable de entorno TOMCAT_USER
 ENV TOMCAT_USER="tomcat"
 
-# Seguridad
-# 10. Variable de entorno SECURITY_MANAGER
+# 10. Seguridad - Variable de entorno SECURITY_MANAGER
 ENV SECURITY_MANAGER="false"
 
 # 11. Copiamos variables de entorno
@@ -39,29 +38,66 @@ COPY ./tomcat-config/.bashrc /root/.bashrc
 # 12. Copiamos variables de entorno para el tomcat
 COPY ./tomcat-config/usr/share/tomcat/bin/setenv.sh /usr/share/tomcat/bin/setenv.sh
 
-# 13. Damos permiso de ejecución
+# 13.
+#RUN httpd -k stop
+#RUN mv /etc/httpd/conf.d/*.conf /tmp/
+
+# 13. Copiamos archivo con virtualHosts para apache
+COPY ./tomcat-config/etc/httpd/conf.d/reportes.conf /etc/httpd/conf.d/reportes.conf
+
+# 14. Damos permiso de ejecución
 RUN chmod +x /usr/share/tomcat/bin/setenv.sh
 
-# 14. Ejecutamos las variables de entorno
+# 15. Ejecutamos las variables de entorno
 RUN /usr/share/tomcat/bin/setenv.sh
 
-# 15. Copiamos el código fuente desde el host hacia la imagen
+# 16. Copiamos el código fuente desde el host hacia la imagen
 COPY ./jasper-servlet /opt/jasper-servlet
 
-# 16. Nos ubicamos en el directorio del código fuente
+# 17. Nos ubicamos en el directorio del código fuente
 WORKDIR /opt/jasper-servlet
 
-# 17. Compilamos el proyecto para generar el .war
+# 18. Compilamos el proyecto para generar el .war
 RUN mvn clean package -DskipTests
 
-# 18. Copiamos el WAR generado a la carpeta webapps de Tomcat con el nuevo nombre
+# 19. Copiamos el WAR generado a la carpeta webapps de Tomcat con el nuevo nombre
 RUN cp target/reportes.war /usr/share/tomcat/webapps/reportesJasper.war
 
-# 19. Asignamos los permisos correctos al usuario tomcat
+# 20. Asignamos los permisos correctos al usuario tomcat
 RUN chown -R tomcat:tomcat /usr/share/tomcat/webapps/
 
-# 20. Expone el puerto por defecto de Tomcat
-EXPOSE 8880
+# 21. Se crea el directorio para la generacion de los reportes del SIAAP
+RUN mkdir -p /vhosts/reportes/siaap
 
-# 21. EL PASO CRUCIAL: Inicia Tomcat en primer plano (foreground)
-CMD ["/usr/share/tomcat/bin/catalina.sh", "run"]
+# 22. Asignamos los permisos al directorio donde se genera los reportes
+RUN chmod -R 755 /vhosts/reportes/
+
+# 22. Asignamos los permisos de usuario y grupo al directorio de la generacion de reportes
+#RUN chown -R nginx:nginx /vhosts/reportes
+RUN chown -R apache:apache /vhosts/reportes
+
+# Asignamos el puerto global de apache
+#RUN sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf
+
+# 23. Se copia el Script para el arranque unificado en el directorio raiz
+COPY ./tomcat-config/entrypoint.sh /entrypoint.sh
+
+# 24. Ubicamos en el directorio Raiz
+WORKDIR /
+
+# 25. Le damos permisos de ejecucion a entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+# 26. Expone el puerto por defecto de Tomcat
+EXPOSE 80 8080
+
+# 27. Comando de arranque unificado
+ENTRYPOINT ["/entrypoint.sh"]
+
+# Otras forma de iniciar tomcat y apache
+#RUN httpd -D FOREGROUND
+#RUN httpd -k start
+#CMD ["/usr/share/tomcat/bin/catalina.sh", "run"]
+#CMD ["httpd", "-D", "FOREGROUND"]
+# Comando de arranque apache
+#CMD ["httpd", "-k", "start"]
