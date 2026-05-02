@@ -64,34 +64,39 @@ RUN mvn clean package -DskipTests
 RUN cp target/reportes.war /usr/share/tomcat/webapps/reportesJasper.war
 
 # 20. Asignamos los permisos correctos al usuario tomcat
-RUN chown -R tomcat:tomcat /usr/share/tomcat/webapps/
+#RUN chown -R tomcat:tomcat /usr/share/tomcat/webapps/
 
 # 21. Se crea el directorio para la generacion de los reportes del SIAAP
 RUN mkdir -p /vhosts/reportes/siaap
 
-# 22. Asignamos los permisos al directorio donde se genera los reportes
-RUN chmod -R 755 /vhosts/reportes/
+# 22. Agrega el usuario apache al grupo tomcat
+RUN usermod -a -G tomcat apache
 
-# 22. Asignamos los permisos de usuario y grupo al directorio de la generacion de reportes
+# 23. Asignamos los permisos de usuario y grupo al directorio de la generacion de reportes
 #RUN chown -R nginx:nginx /vhosts/reportes
-RUN chown -R apache:apache /vhosts/reportes
+#RUN chown -R apache:apache /vhosts/reportes
+#RUN chown -R tomcat:tomcat /vhosts/reportes
+#RUN chown -R tomcat:apache /vhosts/reportes
+
+# 24. Asignamos los permisos al directorio donde se genera los reportes
+RUN chmod -R 2755 /vhosts/reportes/
 
 # Asignamos el puerto global de apache
 #RUN sed -i 's/Listen 80/Listen 8080/' /etc/httpd/conf/httpd.conf
 
-# 23. Se copia el Script para el arranque unificado en el directorio raiz
+# 25. Se copia el Script para el arranque unificado en el directorio raiz
 COPY ./tomcat-config/entrypoint.sh /entrypoint.sh
 
-# 24. Ubicamos en el directorio Raiz
+# 26. Ubicamos en el directorio Raiz
 WORKDIR /
 
-# 25. Le damos permisos de ejecucion a entrypoint.sh
+# 27. Le damos permisos de ejecucion a entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-# 26. Expone el puerto por defecto de Tomcat
+# 28. Expone el puerto por defecto de Tomcat
 EXPOSE 80 8080
 
-# 27. Comando de arranque unificado
+# 29. Comando de arranque unificado
 ENTRYPOINT ["/entrypoint.sh"]
 
 # Otras forma de iniciar tomcat y apache

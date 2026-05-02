@@ -25,10 +25,13 @@ services:
       - ./tomcat-config/:/opt/tomcat-config
       - ./jrxml/:/usr/share/tomcat/webapps/reportes
       - ./generacion-reporte/:/vhosts/reportes
+    networks:
+      server_report:
+        ipv4_address: 172.31.232.2  # La IP fija que deseas asignar
 networks:
   # Solo dejamos una red interna para las víctimas de contenedor
-  lab_red:
+  server_report:
     driver: bridge
-    #ipam:
-    #config:
-    #- subnet: 172.20.0.0/24
+    ipam:
+      config:
+        - subnet: 172.31.232.0/24    # Rango de la subred
