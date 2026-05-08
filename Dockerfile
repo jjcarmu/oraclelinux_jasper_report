@@ -1,9 +1,13 @@
 FROM jjcarmu/oraclelinux_report:1.0
 
-# 1. Instala las dependencias necesarias ( wget, tar, gzip, apache, nano)
+# 1. Instalar las dependencias necesarias ( wget, tar, gzip, apache, nano)
 RUN dnf update -y && \
     dnf install -y wget tar gzip httpd nano && \
+    dnf install -y dejavu-serif-fonts dejavu-sans-mono-fonts && \
     dnf clean all
+
+# 1.1. Refrescar el caché de fuentes del sistema
+RUN fc-cache -fv
 
 # 2. Variable de entorno JAVA_HOME
 ENV JAVA_HOME=/usr/lib/jvm/temurin-17-jdk
