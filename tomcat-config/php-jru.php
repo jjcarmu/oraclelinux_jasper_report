@@ -35,7 +35,7 @@ class JRU {
      * @return void
      * @throws RuntimeException si la generación falla
      */
-    public function runPdfFromSql($rutaReporte, $rutaSalida, $parametros, $sql, $conexion) {
+    public function runPdfFromSql($rutaReporte, $rutaSalida, $parametros, $sql, $conexion, $formato) {
 
         $payload = array(
             'reporte' => $rutaReporte,
@@ -45,6 +45,7 @@ class JRU {
             'usuario' => $conexion->usuario,
             'password' => $conexion->password,
             'sql' => $sql,
+            'formato' => $formato,
             'parametros' => $parametros->toArray(),
         );
 

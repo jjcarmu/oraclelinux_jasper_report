@@ -7,6 +7,11 @@ import net.sf.jasperreports.engine.util.JRLoader;
 import net.sf.jasperreports.export.SimpleExporterInput;
 import net.sf.jasperreports.export.SimpleOutputStreamExporterOutput;
 
+import net.sf.jasperreports.engine.export.JRXlsExporter;
+import net.sf.jasperreports.engine.export.ooxml.JRXlsxExporter;
+import net.sf.jasperreports.export.SimpleXlsReportConfiguration;
+import net.sf.jasperreports.export.SimpleXlsxReportConfiguration;
+
 import net.sf.jasperreports.engine.design.JasperDesign;
 import net.sf.jasperreports.engine.xml.JRXmlLoader;
 import net.sf.jasperreports.engine.design.JRDesignQuery;
@@ -23,8 +28,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// import org.slf4j.Logger;
-// import org.slf4j.LoggerFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Servlet JasperReports - Universidad del Valle
@@ -41,22 +46,21 @@ import java.util.stream.Collectors;
  * "parametros": { "CLAVE": "valor", ... }
  * }
  *
- * Cuando se pasa "sql", se ejecuta manualmente y se usa como JRResultSetDataSource,
- * ignorando el queryString interno del .jrxml. Esto permite que PHP controle
- * el SQL sin modificar los templates.
+ * Cuando se pasa "sql", se modifica el sql interno del jrxml y se compila nuevamente el jasper
+ * Esto permite que PHP controle el SQL sin modificar los templates.
  */
 public class GenerarReporteServlet extends HttpServlet {
 
     private static final long serialVersionUID = 1L;
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // private static final Logger logger = LoggerFactory.getLogger(GenerarReporteServlet.class);
+    private static final Logger logger = LoggerFactory.getLogger(GenerarReporteServlet.class);
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp)
             throws ServletException, IOException {
 
-        // logger.info("Iniciando la generación del reporte...");
+        logger.info("[GenerarReporteServlet] Iniciando la generación del reporte...");
 
         resp.setContentType("application/json;charset=UTF-8");
         PrintWriter out = resp.getWriter();
@@ -79,6 +83,7 @@ public class GenerarReporteServlet extends HttpServlet {
             String usuario = (String) datos.get("usuario");
             String password = (String) datos.get("password");
             String sql = (String) datos.get("sql");
+            String formato = (String) datos.getOrDefault("formato", "pdf");
 
             @SuppressWarnings("unchecked")
             Map<String, Object> parametrosMapa = (Map<String, Object>) datos.getOrDefault("parametros", new HashMap<>());
@@ -173,10 +178,49 @@ public class GenerarReporteServlet extends HttpServlet {
             }
 
             // Exportar PDF
-            JRPdfExporter exporter = new JRPdfExporter();
-            exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
-            exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
-            exporter.exportReport();
+            // JRPdfExporter exporter = new JRPdfExporter();
+            // exporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+            // exporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
+            // exporter.exportReport();
+
+            // Exportar según formato
+            String formatoLower = formato.toLowerCase();
+            switch (formatoLower) {
+                case "pdf":
+                    JRPdfExporter pdfExporter = new JRPdfExporter();
+                    pdfExporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    pdfExporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
+                    pdfExporter.exportReport();
+                    break;
+
+                case "xls":
+                    JRXlsExporter xlsExporter = new JRXlsExporter();
+                    xlsExporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    xlsExporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
+                    SimpleXlsReportConfiguration xlsConfig = new SimpleXlsReportConfiguration();
+                    xlsConfig.setOnePagePerSheet(false);      // evita una hoja por página
+                    xlsConfig.setDetectCellType(true);        // detecta números/fechas
+                    xlsConfig.setRemoveEmptySpaceBetweenRows(true);
+                    xlsExporter.setConfiguration(xlsConfig);
+                    xlsExporter.exportReport();
+                    break;
+
+                case "xlsx":
+                    JRXlsxExporter xlsxExporter = new JRXlsxExporter();
+                    xlsxExporter.setExporterInput(new SimpleExporterInput(jasperPrint));
+                    xlsxExporter.setExporterOutput(new SimpleOutputStreamExporterOutput(rutaSalida));
+                    SimpleXlsxReportConfiguration xlsxConfig = new SimpleXlsxReportConfiguration();
+                    xlsxConfig.setOnePagePerSheet(false);
+                    xlsxConfig.setDetectCellType(true);
+                    xlsxConfig.setRemoveEmptySpaceBetweenRows(true);
+                    xlsxExporter.setConfiguration(xlsxConfig);
+                    xlsxExporter.exportReport();
+                    break;
+
+                default:
+                    jsonError(out, "Formato no soportado: " + formato);
+                    return;
+            }
 
             Map<String, Object> respuesta = new HashMap<>();
             respuesta.put("ok", true);
